@@ -54,13 +54,18 @@ async function findNode(userId: string, path: string[]) {
   return node;
 }
 
-export async function PROPFIND(req: Request, ctx: AnyCtx) {
+async function propfindImpl(req: Request, ctx: AnyCtx) {
   return handleDav(req, ctx, "PROPFIND");
 }
 export async function GET(req: Request, ctx: AnyCtx) { return handleGet(req, ctx); }
 export async function PUT(req: Request, ctx: AnyCtx) { return handleDav(req, ctx, "PUT"); }
 export async function DELETE(req: Request, ctx: AnyCtx) { return handleDav(req, ctx, "DELETE"); }
-export async function MKCOL(req: Request, ctx: AnyCtx) { return handleDav(req, ctx, "MKCOL"); }
+// PROPFIND arrives as POST + X-WebDAV-Method: PROPFIND (see src/middleware.ts note)
+export async function POST(req: Request, ctx: AnyCtx) {
+  const headerMethod = req.headers.get("x-webdav-method")?.toUpperCase();
+  return handleDav(req, ctx, headerMethod || "PROPFIND");
+}
+
 
 async function handleDav(req: Request, ctx: AnyCtx, method: string) {
   const u = await currentUser();
